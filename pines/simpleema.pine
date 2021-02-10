@@ -1,0 +1,64 @@
+//@version=3
+strategy(title = "Combined Strategy", default_qty_type = strategy.percent_of_equity, default_qty_value = 100, commission_type=strategy.commission.percent, commission_value = .005, pyramiding = 0, slippage = 3, overlay = true)
+
+//----------//
+// MOMENTUM //
+//----------//
+ema8 = ema(close, 8)
+ema13 = ema(close, 13)
+ema21 = ema(close, 21)
+ema34 = ema(close, 34)
+ema55 = ema(close, 55)
+
+plot(ema8, color=red, style=line, title="8", linewidth=1)
+plot(ema13, color=orange, style=line, title="13", linewidth=1)
+plot(ema21, color=yellow, style=line, title="21", linewidth=1)
+plot(ema34, color=aqua, style=line, title="34", linewidth=1)
+plot(ema55, color=lime, style=line, title="55", linewidth=1)
+
+longEmaCondition = ema8 > ema13 and ema13 > ema21 and ema21 > ema34 and ema34 > ema55
+exitLongEmaCondition = ema13 < ema55
+
+shortEmaCondition = ema8 < ema13 and ema13 < ema21 and ema21 < ema34 and ema34 < ema55
+exitShortEmaCondition = ema13 > ema55
+
+// ----------  //
+// OSCILLATORS //
+// ----------- //
+rsi = rsi(close, 14)
+longRsiCondition = rsi < 70 and rsi > 40
+exitLongRsiCondition = rsi > 70
+
+shortRsiCondition = rsi > 30 and rsi < 60
+exitShortRsiCondition = rsi < 30
+
+// Stochastic
+length = 14, smoothK = 3, smoothD = 3
+kFast = stoch(close, high, low, 14)
+dSlow = sma(kFast, smoothD)
+
+longStochasticCondition = kFast < 80
+exitLongStochasticCondition = kFast > 95
+
+shortStochasticCondition = kFast > 20
+exitShortStochasticCondition = kFast < 5
+
+//----------//
+// STRATEGY //
+//----------//
+
+longCondition = longEmaCondition and longRsiCondition and longStochasticCondition and strategy.position_size == 0
+exitLongCondition = (exitLongEmaCondition or exitLongRsiCondition or exitLongStochasticCondition) and strategy.position_size > 0
+
+if (longCondition)
+    strategy.entry("LONG", strategy.long)
+if (exitLongCondition)
+    strategy.close("LONG")
+    
+// shortCondition = shortEmaCondition and shortRsiCondition and shortStochasticCondition and strategy.position_size == 0
+// exitShortCondition = (exitShortEmaCondition or exitShortRsiCondition or exitShortStochasticCondition) and strategy.position_size < 0
+
+// if (shortCondition)
+//     strategy.entry("SHORT", strategy.short)
+// if (exitShortCondition)
+//     strategy.close("SHORT")
