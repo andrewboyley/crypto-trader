@@ -26,7 +26,6 @@ def binanceDataFrame(klines):
     df['Open Time'] = pd.to_datetime(df['Open Time'], unit='ms')
     return df
 
-
 def saveDataFrame(df, file_name):
     outfile = open(file_name, 'wb')
     pickle.dump(df, outfile)
@@ -42,19 +41,9 @@ def openDataframe(file_name):
     return df
 
 
-# client = Client(API,SECRET)
-
-# klines = client.get_klines(symbol="BTCUSDT",interval=Client.KLINE_INTERVAL_30MINUTE)
-
-# saveDataFrame(klines,'Klines.pickle')
-
-klines = openDataframe('Klines.pickle')
-
-df = binanceDataFrame(numpy.array(klines))
-
-
 def populate_buys(df):
     df['Decision'] = 'Nothing'
+    equity = 20
 
     # ----------
     #  MOMENTUM 
@@ -87,6 +76,13 @@ def populate_buys(df):
     #  1 - Entered Short
     position = 0
 
+    position_size = 0
+
+    num_profit = 0
+    num_total = 0
+
+    coins = 0
+    
     for i in range(len(df)):
         # MOMENTUM
         ema8i,ema13i,ema21i,ema34i,ema55i = ema8[i],ema13[i],ema21[i],ema34[i],ema55[i]
@@ -124,16 +120,45 @@ def populate_buys(df):
         if longCondition:
             df['Decision'][i] = 'Long'
             position = -1
+
+            position_size = df['Close'][i]
+
+            coins = 10/position_size
+            equity -= 10
         elif exitLongCondition:
             df['Decision'][i] = 'Exit Long'
             position = 0
+
+            diff = df['Close'][i] - position_size
+   
+            num_profit += 1 if diff > 0 else 0
+            equity += coins * df['Close'][i]
+
+            price_diff = (coins * df['Close'][i]) - (10/position_size) - 10
+
+            print(f'Trade #{num_total + 1}: Equity - ${equity:.2f} ({price_diff:.2f})')
+
+            position_size = 0
+            coins = 0
+            num_total += 1
         else:
             df['Decision'][i] = 'Hold'
 
+    #ignore if we're currently holding
+    if position == -1:
+        equity += 10
         #TODO: Do shorts
-    print()
+    print(f'Percent profitable: {num_profit/num_total*100}%\nNumber of Trades: {num_total}\nFinal equity: ${equity:.2f}\nEquity improvement: {(equity-20)/20*100:.2f}%')
 
+client = Client(API,SECRET)
 
+klines = client.get_klines(symbol="BTCUSDT",interval=Client.KLINE_INTERVAL_30MINUTE)
+
+# saveDataFrame(klines,'Klines.pickle')
+
+# klines = openDataframe('Klines.pickle')
+
+df = binanceDataFrame(numpy.array(klines))
 
 populate_buys(df)
 
