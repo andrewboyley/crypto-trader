@@ -23,6 +23,7 @@ class Bot:
         print('- Done fetching balance')
         self.generateBoughtStatus()
         self.generateTicks()
+        print(f'- Balance: {self.usdt:.2f} USDT')
 
     def run(self):
         print("- Bot is running")
@@ -43,16 +44,17 @@ class Bot:
 
                 enterLong, exitLong = strategyDecision(
                     ema8, ema13, ema21, ema34, ema55, rsi, kFast)
+            
 
-            if self.bought[symbol] is not None:
-                if exitLong:
-                    self.sell(symbol, klines)
-            else:
-                if enterLong:
-                    self.buy(symbol, klines)
 
-            # print('Waiting 5 seconds before next decision')
-            sleep(10)
+                if self.bought[symbol]:
+                    if exitLong:
+                        self.sell(symbol, klines)
+                else:
+                    if enterLong:
+                        self.buy(symbol, klines)
+
+            sleep(30)
 
     def generateBoughtStatus(self):
         print('- Generating bought/sold statuses...')
@@ -61,6 +63,7 @@ class Bot:
             symbol_orders = self.client.get_all_orders(symbol=coin, limit=1)
 
             if len(symbol_orders) > 0 and symbol_orders[0]['side'] == 'BUY' and symbol_orders[0]['status'] == 'FILLED':
+                print(f'{coin} is currently holding long')
                 self.bought[coin] = symbol_orders[0]
             else:
                 self.bought[coin] = None
@@ -76,34 +79,34 @@ class Bot:
 
             print(f'Buying {amount} {symbol} @ {price} USDT...')
 
-            #buy_market = self.client.order_market_buy(symbol=symbol, quoteOrderQty=self.usdt)
+            buy_market = self.client.order_market_buy(symbol=symbol, quoteOrderQty=self.usdt)
 
-            # self.bought[symbol] = buy_market
+            self.bought[symbol] = buy_market
 
-            # TESTING
-            buy_market = self.client.create_test_order(
-                symbol=symbol, side='BUY', type='MARKET', quoteOrderQty=self.usdt)
+            ## TESTING
+            #buy_market = self.client.create_test_order(
+            #    symbol=symbol, side='BUY', type='MARKET', quoteOrderQty=self.usdt)
 
-            self.bought[symbol] = {
-                'type': 'BUY',
-                'cummulativeQuoteQty': self.usdt,
-                'executedQty': amount
-            }
+            #self.bought[symbol] = {
+            #    'type': 'BUY',
+            #    'cummulativeQuoteQty': self.usdt,
+            #    'executedQty': amount
+            #}
             ###
 
         else:
-            print("Not enough USDT to trade (minimum of $10)")
+            print(f"{symbol} | Not enough USDT to trade (minimum of $10)")
 
     def sell(self, symbol, df):
         self.refreshBalance()
 
-        # symbol_balance = 0
-        # for s in self.balance:
-        #     if s['asset'] + 'USDT' == symbol:
-        #         symbol_balance = s['free']
+        symbol_balance = 0
+        for s in self.balance:
+            if s['asset'] + 'USDT' == symbol:
+                symbol_balance = s['free']
 
         # TESTING
-        symbol_balance = self.bought[symbol]['executedQty']
+        #symbol_balance = self.bought[symbol]['executedQty']
         ###
 
         price = df["Close"][len(df) - 1]
@@ -113,19 +116,18 @@ class Bot:
             amount = truncate(symbol_balance, self.ticks[symbol])
 
             print(f'Selling {amount} {symbol} @ {price} USDT...')
-            # self.client.order_market_sell(symbol=symbol, quantity=amount)
+            sell_market = self.client.order_market_sell(symbol=symbol, quantity=amount)
 
             # TESTING
-            sell_market = self.client.create_test_order(
-                symbol=symbol, side='SELL', type='MARKET', quantity=amount)
+            #sell_market = self.client.create_test_order(
+            #    symbol=symbol, side='SELL', type='MARKET', quantity=amount)
 
-            sell_market = {
-                'cummulativeQuoteQty': amount * price
-            }
+            #sell_market = {
+            #    'cummulativeQuoteQty': amount * price
+            #}
             ###
 
-            net = self.bought[symbol]['cummulativeQuoteQty'] - \
-                sell_market['cummulativeQuoteQty']
+            net = float(sell_market['cummulativeQuoteQty']) - float(self.bought[symbol]['cummulativeQuoteQty'])
             print(f'Net profit: {net} USDT\n')
 
             self.bought[symbol] = None

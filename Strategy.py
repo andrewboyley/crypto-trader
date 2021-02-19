@@ -17,20 +17,21 @@ def strategyCalculator(ema8, ema13, ema21, ema34, ema55, rsi, kFast):
 
     # MOMENTUM
     longEmaCondition = ema8 > ema13 and ema13 > ema21 and ema21 > ema34 and ema34 > ema55
-    exitLongEmaCondition = ema13 < ema55
+    exitLongEmaCondition = ema21 < ema55
 
     # RSI
-    longRsiCondition = rsi < 70 and rsi > 40
+    longRsiCondition = rsi < 65
     exitLongRsiCondition = rsi > 70
 
     # STOCHASTIC
-    longStochasticCondition = kFast < 80
+    longStochasticCondition = kFast < 70
     exitLongStochasticCondition = kFast > 95
 
     # STRAT
     enterLongCondition = longEmaCondition and longRsiCondition and longStochasticCondition
     exitLongCondition = (
         exitLongEmaCondition or exitLongRsiCondition or exitLongStochasticCondition)
+
 
     return (enterLongCondition, exitLongCondition)
 
