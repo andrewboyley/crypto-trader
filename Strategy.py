@@ -24,7 +24,7 @@ def strategyCalculator(ema8, ema13, ema21, ema34, ema55, rsi, kFast):
     exitLongRsiCondition = rsi > 70
 
     # STOCHASTIC
-    longStochasticCondition = kFast < 70
+    longStochasticCondition = kFast < 80
     exitLongStochasticCondition = kFast > 95
 
     # STRAT
@@ -42,7 +42,6 @@ def calculateIndicators(klines):
     ema21 = talib.EMA(klines['Close'], timeperiod=21)
     ema34 = talib.EMA(klines['Close'], timeperiod=34)
     ema55 = talib.EMA(klines['Close'], timeperiod=55)
-
     # ----------
     #  OSCILLATORS
     # ----------

@@ -9,6 +9,8 @@ from binance.client import Client
 from config import *
 from Bot import Bot
 
+
+print("--- CRYPTO TRADING BOT ---\n")
 bot = Bot()
 bot.run()
 

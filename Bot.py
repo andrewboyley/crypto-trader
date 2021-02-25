@@ -10,6 +10,7 @@ import math
 
 class Bot:
     def __init__(self):
+        print("- Initializing Bot...")
         self.client = Client(API, SECRET)
         print("- Loaded API keys")
 
@@ -29,32 +30,37 @@ class Bot:
         print("- Bot is running")
         print('\n--------TRADES-------\n')
         while True:
-            for symbol in markets:
-                symbol = symbol + 'USDT'
-                klines = self.getKlines(symbol)
+            try:
+                for symbol in markets:
+                    symbol = symbol + 'USDT'
+                    klines = self.getKlines(symbol)
 
-                # self.buy(symbol, klines)
-                # sleep(5)
-                # klines = self.getKlines(symbol)
-                # self.sell(symbol, klines)
-                # return
+                    # self.buy(symbol, klines)
+                    # sleep(5)
+                    # klines = self.getKlines(symbol)
+                    # self.sell(symbol, klines)
+                    # return
 
-                ema8, ema13, ema21, ema34, ema55, rsi, kFast = calculateIndicators(
-                    klines)
+                    ema8, ema13, ema21, ema34, ema55, rsi, kFast = calculateIndicators(
+                        klines)
 
-                enterLong, exitLong = strategyDecision(
-                    ema8, ema13, ema21, ema34, ema55, rsi, kFast)
-            
+                    enterLong, exitLong = strategyDecision(
+                        ema8, ema13, ema21, ema34, ema55, rsi, kFast)
+                
 
 
-                if self.bought[symbol]:
-                    if exitLong:
-                        self.sell(symbol, klines)
-                else:
-                    if enterLong:
-                        self.buy(symbol, klines)
+                    if self.bought[symbol]:
+                        if exitLong:
+                            self.sell(symbol, klines)
+                    else:
+                        if enterLong:
+                            self.buy(symbol, klines)
 
-            sleep(30)
+                sleep(30)
+            except Exception as ex:
+                print(ex) 
+                sleep(10)
+
 
     def generateBoughtStatus(self):
         print('- Generating bought/sold statuses...')
@@ -63,7 +69,7 @@ class Bot:
             symbol_orders = self.client.get_all_orders(symbol=coin, limit=1)
 
             if len(symbol_orders) > 0 and symbol_orders[0]['side'] == 'BUY' and symbol_orders[0]['status'] == 'FILLED':
-                print(f'{coin} is currently holding long')
+                print(f'- {coin} is currently holding long')
                 self.bought[coin] = symbol_orders[0]
             else:
                 self.bought[coin] = None
@@ -95,7 +101,8 @@ class Bot:
             ###
 
         else:
-            print(f"{symbol} | Not enough USDT to trade (minimum of $10)")
+            if not any(self.bought.values()):
+                print(f"{symbol} | Not enough USDT to trade (minimum of $10)")
 
     def sell(self, symbol, df):
         self.refreshBalance()
@@ -133,7 +140,8 @@ class Bot:
             self.bought[symbol] = None
 
         else:
-            print(f"Not enough {symbol} to trade (minimum of $10)")
+            if not any(self.bought.values()):
+                print(f"Not enough {symbol} to trade (minimum of $10)")
 
     def generateTicks(self):
         print('- Generating symbol step sizes...')
