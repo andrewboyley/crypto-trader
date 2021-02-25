@@ -5,6 +5,8 @@
 
 This is a fairly simple cryptocurrency trading bot that is meant to be left running and will make you a profit over time. It has about a 65% win rate which means that it may make some losing trades but will still be profitable in the long run. This project is still *EXTREMELY* buggy and so I urge you to use this with care until I can polish it up a bit.
 
+![Trading View Strategy](Strat.png)
+
 ## Installation
 
 You need to have a Binance spot trading account to use this project (I tried my best to avoid the image validation thing, try use 2FA).
